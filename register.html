@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+
+<html>
+
+
+<head>
+
+  <meta charset="utf-8">
+
+  <title>Register - FutureBlue Carpool</title>
+  <link rel="stylesheet" href="css/w3_1.css" type="text/css">
+  <link rel="stylesheet" href="css/w3_2.css" type="text/css">
+  <link rel="stylesheet" href="css/carpool.css" type="text/css">
+  
+  <style>
+
+  </style>
+
+</head>
+
+<body style="background-image: url('img/road.jpg'); background-size:100%; background-position: top">
+  <div class="navbar">
+    <table>
+      <tr><td width="100%" style="padding-left:20px">FutureBlue Carpool</td></tr>
+    </table>
+  </div>
+  <div class="welcome-pane">
+    <div class="login-box">
+      <div id="isOwner">
+        <br /><br /><br /><h1 style="font-size:25px">I am a...</h1><br /><br />
+        <input onclick="javascript:isOwner(false)" class="ibm-btn-pri" value="Rider" type="button"/>
+        <input onclick="javascript:isOwner(true)" class="ibm-btn-pri" value="Car Owner" type="button"/>
+      </div>
+
+      <div id="registerForm">
+        <form class="ibm-column-form ibm-styled-form" action="javascript:register_page()" autocomplete="on"> 
+          <h1 id="registerTitle"></h1><br />
+          <p> 
+              <label for="firstname">Firstname</label>
+              <input id="firstname" name="firstname" required="required" type="text" />
+          </p>
+          <p> 
+              <label for="lastname">Lastname</label>
+              <input id="lastname" name="lastname" required="required" type="text" />
+          </p>
+          <p> 
+              <label for="email">IBM email</label>
+              <input id="email" name="email" placeholder="you@ca.ibm.com" required="required" type="email" /> 
+          </p>
+          <p> 
+              <label for="password">Password </label>
+              <input id="password" name="password" placeholder="xxxxxxxx" required="required" type="password" />
+          </p>
+          <p> 
+              <label for="password_confirm">Confirm password </label>
+              <input id="password_confirm" name="password_confirm" placeholder="xxxxxxxx" required="required" type="password" />
+          </p>
+          <p> 
+              <label for="phone">Phone number</label>
+              <input id="phone" name="phone" required="required" type="text" />
+          </p>
+          <p style="padding-top:10px">  
+              Already a member ?
+              <a href="login.html">Login</a> 
+              <a id="back_link" href="javascript:isOwnerUI()">Back </a>
+              <input style="float:right" class="ibm-btn-small" value="Register" type="submit"/>
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/jquery-1.10.2.min.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    var usertype = "";
+    isOwnerUI();
+    function isOwnerUI(){
+        $("#isOwner").show();
+        $("#registerForm").hide();
+    }
+    function isOwner(isOwner){
+      usertype =  (isOwner) ? "owner" : "rider";
+      $("#isOwner").hide();
+      $("#back_link").html("Back");
+      $("#registerTitle").html((isOwner) ? "Owner registration" : "Rider registration");
+      $("#registerForm").fadeIn();
+    }
+
+    function register_page(){
+      var email = $("#email").val();
+      var password = ""; // Not implemented for now
+      var firstname = $("#firstname").val();
+      var lastname = $("#lastname").val();
+      var phone = $("#phone").val();
+
+      //lastname, firstname, email, phone, usertype,
+      register(lastname, firstname, email, phone, usertype, function(result){
+        if(result===-1) console.log("ERROR: Cannot sign up");
+        else{
+          login(email, function(data){
+            if(data === -1){
+              console.log("No user found");
+            }else{
+              if(data.usertype === "owner")
+                window.location.href = "ownerHome.html";
+              else
+                window.location.href = "riderHome.html";
+            }
+          });
+        }
+      });
+    }
+    </script>
+
+</body>
+
+</html>

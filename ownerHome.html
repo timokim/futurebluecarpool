@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+  <meta charset="utf-8">
+
+  <title>Owner Dashboard - FutureBlue Carpool</title>
+
+  <script src="js/jquery-1.10.2.min.js"></script>
+  <script src="js/app.js"></script>
+
+  <link rel="stylesheet" href="css/w3_1.css" type="text/css">
+  <link rel="stylesheet" href="css/w3_2.css" type="text/css">
+  <link rel="stylesheet" href="css/carpool.css" type="text/css">
+  <style>
+
+  </style>
+
+</head>
+
+<body>
+ 
+  <div class="navbar">
+    <table>
+      <tr>
+        <td width="70%" style="padding-left:20px">FutureBlue Carpool</td>
+        <td width="10"><a id="current-carpool-nav" href="#main-content">My Carpool</a></td>
+        <td width="10"><a id="request-nav" href="#request-link">Requests</a></td>
+        <td width="10%" style="padding: 15px 15px 0px 0px"><input id="logoff" onClick="logoff()" class="ibm-btn-pri" value="Logout" type="button"/></td>
+      </tr>
+    </table>
+  </div>
+  
+  <div id="main-content" style="background-image: url('img/road.jpg')"><br />
+    <div class="carpool">
+      <h1 style="color:black">My Carpool</h1><br />
+      <div id="carpool-info">
+      </div>
+    </div>
+    <div id="requests-accepted">
+      <br /><h1>You are driving these riders:</h1><br />
+      <div class="error-msg" id="no-riders">You currently have no riders.</div>
+    </div>
+    
+    <div id="request-link"></div>
+    <div id="requests-pending">
+      <h1>Join Requests</h1><br />
+      <div class="error-msg" id="no-requests">You have no requests.</div>
+    </div>
+    
+  </div>
+
+  <script>
+  if(!isloggedin()){
+    //window.location.href = "login.html";
+  }
+  getOwnerCarpool(function(data){
+    if(data === -1){
+      window.location.href = "createCarpool.html";
+    } else {
+      console.log(data);
+      $("#carpool-info").append("<div> Home: " + data.pointA + "</div>");    
+      $("#carpool-info").append("<div> Work: " + data.pointB + "</div>");
+      $("#carpool-info").append("<div> Available Seats: " + data.availableseats + "</div>");
+      $("#carpool-info").append("<div> Description: " + data.description + "</div>");
+      $(".carpool").append("<iframe height=\"100%\" width=\"50%\" float=\"left\" src=\"https://www.google.ca/maps?q="+data.pointA+";z=14&amp;iwloc=A&amp;output=embed\"></iframe>");
+
+      //listAllRequests(data.carpoolid, function(data2){
+      console.log("WAWA");
+      //console.log(data);
+      for(arider in data.riders){
+        if(data.riders[arider].ridestatus === "accepted"){
+          $("#no-riders").hide();
+          $("#requests-accepted").append("<div class=\"carpool\"><div>" + data.riders[arider].firstname + " " + data.riders[arider].lastname+"</div><div> Email: " + data.riders[arider].email + "</div><div> Phone Number: " + data.riders[arider].phoneno + "</div><div> <a href=\"javascript:removeFromCarpool(" + data.carpoolid + ", " + data.riders[arider].userid + ", function(){})\"> <input class=\"ibm-btn-small\" value=\"Kick Off\" type=\"button\"/></a></div></div>");
+        } else if(data.riders[arider].ridestatus === "pending"){
+          $("#no-requests").hide();
+          $("#requests-pending").append("<div class=\"request\"><div>" + data.riders[arider].firstname + " " + data.riders[arider].lastname+"</div><div> Email: " + data.riders[arider].email + "</div><div> Phone Number: " + data.riders[arider].phoneno + "</div><div> <a href=\"javascript:acceptRequest(" + data.carpoolid + ", " + data.riders[arider].userid + ", function(){})\"> <input class=\"ibm-btn-small\" value=\"Accept\" type=\"button\"/> </a><a href=\"javascript:rejectRequest(" + data.carpoolid + ", " + data.riders[arider].userid + ", function(){})\"> <input class=\"ibm-btn-small\" value=\"Reject\" type=\"button\"/> </a> </div></div>");
+        }
+        
+      }
+      console.log("BABA");
+      //})
+    }
+  });
+
+  </script>
+
+</body>
+
+</html>

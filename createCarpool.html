@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+
+<html>
+
+
+<head>
+
+  <meta charset="utf-8">
+
+  <title>Carpool - FutureBlue Carpool</title>
+  <link rel="stylesheet" href="css/w3_1.css" type="text/css">
+  <link rel="stylesheet" href="css/w3_2.css" type="text/css">
+  <link rel="stylesheet" href="css/carpool.css" type="text/css">
+  
+  <style>
+  .submissionfield { width: 400px; height: 50px; }
+  </style>
+
+</head>
+
+<body style="background-image: url('img/road.jpg'); background-size:100%; background-position: top">
+  <div class="navbar">
+    <table>
+      <tr><td width="100%" style="padding-left:20px">FutureBlue Carpool</td></tr>
+    </table>
+  </div>
+  <div class="welcome-pane">
+    <div class="login-box">
+      <div id="registerCarpool">
+        <form class="ibm-column-form ibm-styled-form" action="javascript:registerCarpool()" autocomplete="on"> 
+          <h1>Carpool Registration</h1><br />
+          <p> 
+              <label for="home">Home Address</label>
+              <input id="home" name="home" required="required" type="text" />
+          </p>
+          <p> 
+              <label for="work">Work Address</label>
+              <input id="work" name="work" required="required" type="text" />
+          </p>
+          <p> 
+              <label for="arrive">Work Arrival Time</label>
+              <input id="arrive" name="arrive" required="required" type="text" />
+          </p>
+          <p> 
+              <label for="depart">Work Departure Time</label>
+              <input id="depart" name="depart" required="required" type="text" />
+          </p>
+          <p> 
+              <label for="numseats">Available Seats</label>
+              <input id="numseats" name="numseats" required="required" type="text" />
+          </p>
+          <p>
+              <label for="description">Description</label>
+              <input id="description" class="submissionfield" name="description" required="required" type="textarea">
+              </input>
+          </p>
+          <p>
+              <br /><input class="ibm-btn-small" type="submit" value="Add Carpool"/> 
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/jquery-1.10.2.min.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+  if(!isloggedin()){
+    window.location.href = "login.html";
+  }
+  function registerCarpool(){
+    console.log("got here?")
+    var home = $("#home").val();
+    var work = $("#work").val();
+    var arrive = $("#arrive").val();
+    var depart = $("#depart").val();
+    var numseats = $("#numseats").val();
+    var description = $("#description").val();
+
+    createCarpool(home, work, arrive, depart, numseats, description, function(result){
+      if(result === -1){
+        console.log("Whaa Just Happened!?")
+      } else {
+        window.location.href = "ownerHome.html";
+      }
+    });
+  }
+  </script>
+
+</body>
+
+</html>

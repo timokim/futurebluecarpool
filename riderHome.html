@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+  <meta charset="utf-8">
+
+  <title>Rider Dashboard - FutureBlue Carpool</title>
+  <script src="js/jquery-1.10.2.min.js"></script>
+  <script src="js/app.js"></script>
+
+  <link rel="stylesheet" href="css/w3_1.css" type="text/css">
+  <link rel="stylesheet" href="css/w3_2.css" type="text/css">
+  <link rel="stylesheet" href="css/carpool.css" type="text/css">
+  <style>
+
+  </style>
+
+</head>
+
+<body>
+ 
+  
+  <div class="navbar">
+    <table>
+      <tr>
+        <td width="60%" style="padding-left:20px">FutureBlue Carpool</td>
+        <td width="10"><a id="current-carpool-nav" href="#main-content">My Carpool</a></td>
+        <td width="10"><a id="request-nav" href="#request-link">Requests</a></td>
+        <td width="10"><a id="carpool-nav" href="#carpool-link">Available Carpools</a></td>
+        <td width="10%" style="padding: 15px 15px 0px 0px"><input id="logoff" onClick="logoff()" class="ibm-btn-pri" value="Logout" type="button"/></td>
+      </tr>
+    </table>
+  </div>
+  <div id="main-content" style="background-image: url('img/road.jpg')">
+    <div id="current-ride">
+      <h1>My Current Carpool</h1><br/>
+    </div>
+    <div id="request-link"></div>
+    <div id="requests">
+      <h1>Requests</h1><br/>
+    </div>
+    <br />
+    <div id="carpool-link"></div>
+    <div id="carpools">
+      <h1>Available Carpools</h1><br/>
+    </div>
+  </div>
+
+  <script>
+
+
+  $('#requests').hide();
+  $("#request-nav").hide();
+  $('#current-ride').hide();
+  $('#current-carpool-nav').hide();
+
+  if(isloggedin()){
+    display_requests();
+    display_current_ride();
+  }else{
+    //No log off if you're not in!
+    $("#logoff").hide(); 
+    $('#current-carpool-nav').hide();
+    $("#request-nav").hide();
+    $("#carpool-nav").hide();
+  }
+
+  function display_current_ride(){
+    //Dear Yutong, display rider's current rider here
+    getRiderAcceptedRequest(function(carpoolid){
+      if(carpoolid === -1) return;
+      else{
+        getCarpool(carpoolid, function(data){
+          var curRequestHtml = "<div class=\"request\">" + "Status: <span style=\"color:green\">Accepted </span> " + gen_carpool_string(data);
+
+          if(data.riders !== null ){
+            curRequestHtml += " Ride Buddies: "
+            for(rider in data.riders){
+              curRequestHtml += data.riders[rider].firstname + " " + data.riders[rider].lastname + ",";
+            }
+            curRequestHtml = curRequestHtml.substring(0, curRequestHtml.length - 1);
+          }
+          curRequestHtml += " <a href=\"javascript:leaveCarpool(" + data.carpoolid + ")\"><input class=\"ibm-btn-small\" value=\"Leave Carpool\" type=\"button\"/></a>" ; 
+          $("#current-ride").append(curRequestHtml);
+          console.log(curRequestHtml);
+          $("#current-ride").show();
+          $('#current-carpool-nav').show();
+        });
+      }
+    });
+  }
+
+  function display_requests(){
+    getRiderRequests(function(requests){
+      if(requests.length !== 0 ){
+        var iveSeenYou = [];
+        var statusDict = [];
+        for(request in requests){
+          if(requests[request].status!=="accepted"){
+            statusDict[requests[request].carpoolid] = requests[request].status; // Dictionary for async workaround
+
+            getCarpool(requests[request].carpoolid, function(data){
+              var status = "";
+              var cancelButton = "";
+              if( statusDict[data.carpoolid] === "pending"){
+                status = "Status: <span style=\"color:orange\">Pending </span>";
+                cancelButton = "<a href=\"javascript:cancel_request_page(" + data.carpoolid + ")\"> <input class=\"ibm-btn-small\" value=\"Cancel Request\" type=\"button\"/></a>";
+              }
+              if( statusDict[data.carpoolid] === "rejected"){
+                status = "Status: <span style=\"color:red\">Rejected </span>";
+              }
+              var requestHtml = "<div class=\"request\" id=\"req" + data.carpoolid + "\">" + status + " " + gen_carpool_string(data) + " ";
+              requestHtml += cancelButton;
+              requestHtml += "</div><br />"
+              $("#requests").append(requestHtml);
+            })
+            $('#requests').show(); // Show requests only if we have any. 
+            $("#request-nav").show();
+
+          }
+        }
+      }
+    });
+  }
+
+  listAllCarpool(function(carpools){
+    var name = "";
+    var pointA = "";
+    var pointB = "";
+    var departTime = "";
+    var arriveTime = "";
+    if(isloggedin()){
+      getRiderRequestsCarpoolids(function(alreadyRequested){
+        for (carpool in carpools){
+          if(jQuery.inArray(carpools[carpool].carpoolid, alreadyRequested) === -1 ){
+            // Join link unique to "available carpools section"
+            joinLink = (isloggedin()) ? "  <a href=\"javascript:requestCarpool_page(" + carpools[carpool].carpoolid + ")\"><input class=\"ibm-btn-small\" value=\"Join Carpool\" type=\"button\"/></a>" : "  <a href=\"login.html\"><input class=\"ibm-btn-small\" value=\"Join Carpool\" type=\"button\"/></a>";
+          }else{
+            joinLink = "<span style=\"color:green\"> Requested</span>";
+          }
+
+          // DEAR JOSH: Any front-end changes go here. (this is inside the <ul> for <div id="carpools">)
+          $("#carpools").append("<div class=\"carpool\" id=" + carpools[carpool].carpoolid + "><div id=\"carpool-info\">" + gen_carpool_string(carpools[carpool]) + "<span style=\"color:green\"></span>" + joinLink + "</div><iframe height=\"100%\" width=\"50%\" float=\"left\" src=\"https://www.google.ca/maps?q="+carpools[carpool].pointA+";z=14&amp;iwloc=A&amp;output=embed\"></iframe></div><br />");
+        }
+      });
+    }else{
+      for (carpool in carpools){
+
+        // Join link unique to "available carpools section"
+        joinLink = (isloggedin()) ? "  <a href=\"javascript:requestCarpool_page(" + carpools[carpool].carpoolid + ")\"><input class=\"ibm-btn-small\" value=\"Join Carpool\" type=\"button\"/></a>" : "  <a href=\"login.html\"><input class=\"ibm-btn-small\" value=\"Join Carpool\" type=\"button\"/></a>";
+
+        // DEAR JOSH: Any front-end changes go here. (this is inside the <ul> for <div id="carpools">)
+        $("#carpools").append("<div class=\"carpool\" id=" + carpools[carpool].carpoolid + "><div id=\"carpool-info\">" + gen_carpool_string(carpools[carpool]) + "<span></span>" + joinLink + "</div><iframe height=\"100%\" width=\"50%\" float=\"left\" src=\"https://www.google.ca/maps?q="+carpools[carpool].pointA+";z=14&amp;iwloc=A&amp;output=embed\"></iframe></div><br />");
+      }
+    }
+
+  });
+
+  function gen_carpool_string(carpool){
+      // Very ugly null guard (cuz some of these are null)
+      name = (carpool.user) ? "<strong>" + carpool.user.firstname + " " + carpool.user.lastname + "</strong>" : "";
+      pointA = (carpool.pointA) ? "From: " + carpool.pointA : "";
+      pointB = (carpool.pointB) ? " To: " + carpool.pointB : "";
+      departTime = (carpool.departTime) ? " Depart time: " + carpool.departTime : "";
+      arriveTime = (carpool.arriveTime) ? " Arrive time: " + carpool.arriveTime : "";
+      spots = (carpool.availableseats) ? " Available Seats: " + carpool.availableseats : "";
+      return name +"<br />" + pointA +"<br />"+ pointB +"<br />"+ "<br />" + departTime + "<br />" + arriveTime + "<br />" + spots; 
+  }
+
+  function add_request_page(carpoolid){
+    // Double check that query got through, then add request
+    getRiderRequests(function(requests){
+      if(requests.length === 0){
+        console.error("REQUEST WAS NOT PROCESSED!!!!");
+      }else{
+        getCarpool(carpoolid, function(data){
+          console.log(data);
+          $("#requests").append("<div class=\"request\" id=\"req" + data.carpoolid + "\">" + "Status: <span style=\"color:orange\">Pending </span>" + //Assume status pending
+          gen_carpool_string(data) + "<a href=\"javascript:cancel_request_page(" + data.carpoolid + ")\"> <input class=\"ibm-btn-small\" value=\"Cancel Request\" type=\"button\"/></a>" + "<span id=\"cancel_req" + data.carpoolid  +"\" style=\"color:red\"></span></div><br />");
+          $("#requests").show();
+          $("#request-nav").show();
+
+          return true;
+        });
+      }
+    });
+  }
+  function cancel_request_page(carpoolid){
+    rejectRequest(carpoolid,  readCookie("userinfo").userid, function(result){
+      console.log("Result for cancel " + carpoolid + " " + result)
+      $("#cancel_req" + carpoolid).html(" Request Canceled");
+      //var joinLink = "  <a href=\"javascript:requestCarpool_page(" + carpools[carpool].carpoolid + ")\"><input class=\"ibm-btn-small\" value=\"Join Carpool\" type=\"button\"/></a>";
+      $("#" + carpoolid + " span").html("");
+
+      $("#req" + carpoolid + " a").hide(); // no more cancel request
+      // $("#" + carpoolid + " a").show(); // Taken out on purpose to avoid spam cancel & join
+
+    });
+  }
+
+  function requestCarpool_page(carpoolid){
+    $("#" + carpoolid + " span").html(" Processing...");
+    $("#" + carpoolid + " a").hide();
+    requestCarpool(carpoolid, function(data){
+      if(data.response_code !== 0){
+        $("#" + carpoolid + " span").html(" " + data.response_status);
+        $("#" + carpoolid + " a").html("Try again");
+        $("#" + carpoolid + " a").show();
+        $("#" + carpoolid).append();
+      }else{
+        add_request_page(carpoolid);
+        $("#requests").show();
+        $("#" + carpoolid + " span").html(" Requested");
+      }
+    })
+  }
+
+  function leaveCarpool(carpoolid){
+    removeFromCarpool(carpoolid,readCookie("userinfo").userid,function(success){
+      $("#current-ride span").html("You left this ride!");
+      $("#current-ride span").attr("style", "color:red");
+      $("#" + carpoolid + " span").html("");
+      $("#" + carpoolid + " a").show(); // <a> tag should still have "join carpool"
+    });
+  }
+
+  $('a').click(function(){
+      $('html, body').animate({
+          scrollTop: $( $.attr(this, 'href') ).offset().top
+      }, 500);
+      return false;
+  });
+  </script>
+
+</body>
+
+</html>
